@@ -1,4 +1,4 @@
-# 🎵 merge_media
+# RustMediaMerger
 
 A simple GUI tool for merging external audio tracks into video files using `ffmpeg` and `ffprobe`, built with Rust (`eframe`/`egui`).
 
