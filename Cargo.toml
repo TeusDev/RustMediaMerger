@@ -20,3 +20,7 @@ winapi = { version = "0.3", features = [
     "handleapi",
     "winuser",
 ] }
+[build-dependencies]
+reqwest = { version = "0.11", features = ["blocking"] }
+zip = "0.6"
+walkdir = "2"
