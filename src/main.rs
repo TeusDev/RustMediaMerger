@@ -357,7 +357,74 @@ fn find_audio_track(file: &str, code: &str, exe_dir: &PathBuf) -> Option<u32> {
         })
 }
 
+use std::ffi::OsStr;
+use std::os::windows::ffi::OsStrExt;
+use std::ptr::null_mut;
+use winapi::um::handleapi::CloseHandle;
+use winapi::um::processthreadsapi::GetCurrentProcess;
+use winapi::um::processthreadsapi::OpenProcessToken;
+use winapi::um::securitybaseapi::GetTokenInformation;
+use winapi::um::shellapi::ShellExecuteW;
+use winapi::um::winnt::{TokenElevation, HANDLE, TOKEN_ELEVATION, TOKEN_QUERY};
+use winapi::um::winuser::SW_SHOW;
+
+/// Checks if current process has elevated privileges
+fn is_elevated() -> bool {
+    unsafe {
+        let mut token: HANDLE = null_mut();
+        if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) == 0 {
+            return false;
+        }
+
+        let mut elevation = TOKEN_ELEVATION { TokenIsElevated: 0 };
+        let mut size = std::mem::size_of::<TOKEN_ELEVATION>() as u32;
+
+        let result = GetTokenInformation(
+            token,
+            TokenElevation,
+            &mut elevation as *mut _ as *mut _,
+            size,
+            &mut size,
+        );
+
+        CloseHandle(token);
+        result != 0 && elevation.TokenIsElevated != 0
+    }
+}
+
+/// Relaunches self with admin privileges via ShellExecuteW
+fn relaunch_as_admin() {
+    let exe = std::env::current_exe().unwrap();
+    let exe_w: Vec<u16> = OsStr::new(exe.to_str().unwrap())
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
+
+    unsafe {
+        ShellExecuteW(
+            null_mut(),
+            widestring("runas").as_ptr(),
+            exe_w.as_ptr(),
+            null_mut(),
+            null_mut(),
+            SW_SHOW,
+        );
+    }
+    std::process::exit(0);
+}
+
+fn widestring(s: &str) -> Vec<u16> {
+    OsStr::new(s)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect()
+}
+
 fn main() {
+    if !is_elevated() {
+        relaunch_as_admin();
+    }
+
     // logger to file
     let file = File::create("audio_merger.log").expect("Cannot create log");
     CombinedLogger::init(vec![WriteLogger::new(
@@ -366,12 +433,14 @@ fn main() {
         file,
     )])
     .unwrap();
+
     info!("Application started");
     let mut opts = NativeOptions::default();
-    opts.maximized = true;
+    opts.viewport.maximized = Some(true);
     run_native(
         "Audio Merger GUI",
         opts,
         Box::new(|_cc| Box::new(AudioMergerApp::default())),
-    );
+    )
+    .unwrap();
 }
