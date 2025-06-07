@@ -1,6 +1,6 @@
 # RustMediaMerger
 
-A simple GUI tool for merging external audio tracks into video files using `ffmpeg` and `ffprobe`, built with Rust (`eframe`/`egui`).
+A simple GUI tool for merging external audio tracks (from either audio or video containers) into video files using `ffmpeg` and `ffprobe`, built with Rust (`eframe`/`egui`).
 
 ## ✨ Key Features
 
@@ -16,8 +16,8 @@ A simple GUI tool for merging external audio tracks into video files using `ffmp
 The main window allows you to:
 
 1. Select a **video file** (input)
-2. Select an **external audio file** (e.g., dubbed track)
-3. Pick the desired audio track
+2. Select an **external file** (e.g., with dubbed audio track)
+3. Pick the desired audio track (if it asks for)
 4. Set the **output file** path
 5. View logs and status in a toggleable log panel
 
@@ -58,13 +58,8 @@ cd merge_media
 cargo build --release
 ```
 
-Place `ffmpeg.exe` and `ffprobe.exe` in the executable directory or where the app expects (`exe_dir`).
-
-## 💻 Platform Support
-
-- **Windows**: Full support (admin relaunch logic)
-- **Other platforms**: Adaptable with minor changes
+Expect `ffmpeg.exe` and `ffprobe.exe` binaries in the app executable root directory.
 
 ---
 
-> _Easily merge dubbed audio into videos with a streamlined, user-friendly interface._
+> _Easily merge dubbed audio tracks into videos with a streamlined, user-friendly interface._
